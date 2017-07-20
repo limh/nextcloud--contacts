@@ -1,5 +1,5 @@
 angular.module('contactsApp')
-.service('ContactService', function(DavClient, AddressBookService, Contact, $q, CacheFactory, uuid4) {
+.service('ContactService', function(DavClient, AddressBookService, Contact, $q, CacheFactory, uuid4, vCardPropertiesService) {
 
 	var cacheFilled = false;
 
@@ -151,6 +151,10 @@ angular.module('contactsApp')
 					? DavClient.getContacts(addressBook, {}, [ contact.data.url ]).then(
 						function (vcards) { return new Contact(addressBook, vcards[0]); }
 					).then(function (contact) {
+						['tel', 'adr', 'email'].forEach(function(field) {
+							var defaultValue = vCardPropertiesService.getMeta(field).defaultValue || {value: ''};
+							contact.addProperty(field, defaultValue);
+						} );
 						contacts.put(contact.uid(), contact);
 						notifyObservers('getFullContacts', contact.uid());
 						return contact;
